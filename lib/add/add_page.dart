@@ -1,87 +1,61 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
+import 'package:flutter_lesson_01/home/add_view_model.dart';
 
-class AddPage extends StatefulWidget{
-  const AddPage({super.key});
-
+class AddPage extends StatefulWidget {
   @override
-  State<StatefulWidget> createState() => _AddPage();
+  State<AddPage> createState() => _AddPageState();
 }
 
-class _AddPage extends State<AddPage> {
-  late Timer _timer;
-  TextEditingController _textEditingController = TextEditingController();
-
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    print("AddPage - initState");
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      final date = DateTime.now();
-      print("${date.minute}: ${date.second}");
-    });
-  }
-
-  @override
-  void didChangeDependencies() {
-    // TODO: implement didChangeDependencies
-    super.didChangeDependencies();
-    print("AddPage - didChangeDependencies");
-  }
+class _AddPageState extends State<AddPage> {
+  final TextEditingController _controller = TextEditingController();
+  final AddViewModel _viewModel = AddViewModel();
 
   @override
   Widget build(BuildContext context) {
-    print("AddPage - build");
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text("Добавить задачу"),
+      appBar: AppBar(title: const Text('Add Task')),
+      body: ListenableBuilder(
+        listenable: _viewModel,
+        builder: (context, _) {
+          final state = _viewModel.state;
+
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                TextField(
+                  controller: _controller,
+                  decoration: const InputDecoration(
+                    labelText: 'Название задачи',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                
+                // Логика отображения сообщений в зависимости от состояния
+                if (!state.isInitial && !state.isSucceed)
+                  const Text(
+                    'Введите название',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                if (!state.isInitial && state.isSucceed)
+                  const Text(
+                    'Сохранено!',
+                    style: TextStyle(color: Colors.green),
+                  ),
+                  
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    _viewModel.addTask(_controller.text);
+                  },
+                  child: const Text('Сохранить'),
+                ),
+              ],
+            ),
+          );
+        },
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: .center,
-          children: [
-            TextField(
-              controller: _textEditingController,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(), 
-                label: Text("Введите название задачи")
-                )
-              ),
-            TextButton(onPressed: () => _saveTodo(), child: Text("Сохранить"))
-          ],
-        ),
-      )
     );
-  }
-
-  
-
-  void _saveTodo() {
-    Navigator.pop(context, _textEditingController.text);
-  }
-
-  @override
-  void didUpdateWidget(covariant AddPage oldWidget) {
-    // TODO: implement didUpdateWidget
-    super.didUpdateWidget(oldWidget);
-    print("AddPage - didUpdateWidget");
-  }
-
-  @override
-  void deactivate() {
-    // TODO: implement deactivate
-    super.deactivate();
-    print("AddPage - deactivate");
-  }
-
-  @override
-  void dispose() {
-    // TODO: implement dispose
-    super.dispose();
-    print("AddPage - dispose");
-    _timer.cancel();
-    _textEditingController.dispose();
   }
 }

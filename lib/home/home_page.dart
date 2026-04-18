@@ -3,7 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lesson_01/add/add_page.dart';
 import 'package:flutter_lesson_01/add/settings_page.dart';
 import 'package:flutter_lesson_01/database/app_database.dart';
+import 'package:flutter_lesson_01/database/app_repository.dart';
+import 'package:flutter_lesson_01/home/home_state.dart';
 import 'dart:math';
+
+import 'package:flutter_lesson_01/home/home_view_model.dart';
 
 
 class MyHomePage extends StatefulWidget {
@@ -15,11 +19,16 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  late final HomeViewModel vm;
+
   int _counter = 0;
   bool isVisible = true;
   Color containerColor = Colors.blue;
   List<Color> colorList = [Colors.red, Colors.blue, Colors.black, Colors.yellow, Colors.green];
   AppDatabase db = AppDatabase();
+  
+  
+  
 
   void _incrementCounter() {
     setState(() {
@@ -32,6 +41,12 @@ class _MyHomePageState extends State<MyHomePage> {
     // TODO: implement initState
     super.initState();
     print("HomePage - initState");
+    
+    final db = AppDatabase();
+    final repo = AppRepositoryImplementation(db: db);
+    vm = HomeViewModel(repo: repo);
+    vm.getList();
+
   }
 
   @override
@@ -44,29 +59,33 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     print("HomePage - build");
-    return Scaffold(
-      appBar: AppBar(actions: [
-        IconButton(
-          icon: const Icon(Icons.settings),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => SettingsPage()),
-              );
-            },
-          ),
-        ],
+    return BlocProvider.value(
+      value: vm,
+      child: Scaffold(
+        body: BlocBuilder<HomeViewModel, HomeState>(
+          builder: (context, state) {
+            if (state.isEmpty) {
+              return Center(child: 
+              Column(
+                children: 
+                [Padding(padding: .all(100)),
+                  Text("У вас нет задач"),
+                TextButton(onPressed: () => (), child: Text("Добавить"))
+                ]));
+            } else {
+              return Scaffold(
+      appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
-        ),
-          body: Center(
-          child: ListView.builder(
-          itemCount: db.todoList.length,
+      ),
+      body: Center(
+        child: ListView.builder(
+          itemCount: state.items.length,
           itemBuilder: (context, index) {
-            final todo = db.todoList[index];
+            final todo = state.items[index];
             return ListTile(title: Text(todo.title));
           }
-        ),
+        )
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _navigateToAddPage,
@@ -74,43 +93,49 @@ class _MyHomePageState extends State<MyHomePage> {
         child: const Icon(Icons.add),
       ),
     );
+            }
+          },
+        ) ,
+      ),
+      );
+    
   }
 
-  //  @override
-  //  Widget build(BuildContext context) {
-  //    print("HomePage - build");
-  //    return Scaffold(
-  //      appBar: AppBar(
-  //        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-  //        title: Text(widget.title),
-  //      ),
-  //      body: Center(
-  //        child: Column(
-  //          mainAxisAlignment: .center,
-  //          children: [
-  //            Visibility(
-  //              visible: isVisible,
-  //              child: const Text('You have pushed the button this many times:')
-  //            ),
-  //            Text(
-  //              '$_counter',
-  //              style: Theme.of(context).textTheme.headlineMedium,
-  //            ),
-  //            Container(width: 200, height: 100, color: containerColor),
-  //            TextButton(onPressed: _updateUI, child: Text("Test"))
-  //          ],
-  //        ),
-  //      ),
-  //      floatingActionButton: FloatingActionButton(
-  //        onPressed: _incrementCounter,
-  //        tooltip: 'Increment',
-  //        child: const Icon(Icons.add),
-  //      ),
-  //    );
-  //  }
+  // @override
+  // Widget build(BuildContext context) {
+  //   print("HomePage - build");
+  //   return Scaffold(
+  //     appBar: AppBar(
+  //       backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+  //       title: Text(widget.title),
+  //     ),
+  //     body: Center(
+  //       child: Column(
+  //         mainAxisAlignment: .center,
+  //         children: [
+  //           Visibility(
+  //             visible: isVisible,
+  //             child: const Text('You have pushed the button this many times:')
+  //           ),
+  //           Text(
+  //             '$_counter',
+  //             style: Theme.of(context).textTheme.headlineMedium,
+  //           ),
+  //           Container(width: 200, height: 100, color: containerColor),
+  //           TextButton(onPressed: _updateUI, child: Text("Test"))
+  //         ],
+  //       ),
+  //     ),
+  //     floatingActionButton: FloatingActionButton(
+  //       onPressed: _incrementCounter,
+  //       tooltip: 'Increment',
+  //       child: const Icon(Icons.add),
+  //     ),
+  //   );
+  // }
 
   Future _navigateToAddPage() async {
-   final result = await Navigator.push(context, MaterialPageRoute(builder: (_) => const AddPage()));
+   final result = await Navigator.push(context, MaterialPageRoute(builder: (_) => AddPage()));
    if (result != null) {
     print("Текст со второго экрана: $result");
    }
@@ -148,5 +173,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
 extension on Random {
   void nextInt(int lenth) {
+
   }
 }
